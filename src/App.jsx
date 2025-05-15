@@ -9,12 +9,11 @@ export default function App() {
   const [menuLeft, setMenuLeft] = useState(0);
   const [menuTop, setMenuTop] = useState(0);
   const [fabricCanvas, setFabricCanvas] = useState(null);
-  const handleRightClick = (e) => {
-    e.preventDefault();
-    console.log("Right click"); // Make sure this shows
-  };
+
 
   useEffect(() => {
+
+    // Initialize Fabric.js canvas
     const canvas = new Canvas(canvasRef.current, {
       width: 500,
       height: 500,
@@ -35,12 +34,15 @@ export default function App() {
     canvas.upperCanvasEl.addEventListener("mousedown", (event) => {
       if (event.button === 2) {
         // Right-click = 2
-        const pointer = canvas.getViewportPoint(event);
+        const pointer = canvas.getScenePoint(event);
+
+        setMenuLeft(event.x);
+        setMenuTop(event.y);
 
         setIsActive((prev) => !prev);
 
         console.log(
-          `Right-clicked on Fabric canvas at ${pointer.x}, ${pointer.y})`
+          `Right-clicked on Fabric canvas at ${event.x}, ${event.y})`
         );
       }
     });
@@ -51,11 +53,11 @@ export default function App() {
     );
 
     canvas.upperCanvasEl.addEventListener("mousedown", (event) => {
-      if(event.button===0){
+      if (event.button === 0) {
         setIsActive(false);
         console.log("Left click");
       }
-    })
+    });
     // const handleResize = () => {
     //   canvas.setWidth(window.innerWidth);
     //   canvas.setHeight(window.innerHeight);
@@ -65,12 +67,21 @@ export default function App() {
     return () => {
       // window.removeEventListener('resize', handleResize);
 
-      // Clean up event listeners
-   
-
+      //Umount the canvas
       canvas.dispose();
     };
   }, []);
+
+ const clearCanvas = () => {
+    if (fabricCanvas) {
+      fabricCanvas.getObjects().forEach((obj) => fabricCanvas.remove(obj));
+  }
+  fabricCanvas.renderAll()
+  setIsActive(false);
+
+  }
+
+  console.log(menuLeft, menuTop);
 
   return (
     <>
@@ -82,19 +93,27 @@ export default function App() {
     style={{ border: '2px solid red' }}
   /> */}
       <div className="flex justify-center">
-        <canvas ref={canvasRef} />
-     
+        <canvas className="border-2 border-black" ref={canvasRef} />
       </div>
       {/* <!-- Custom Context Menu --> */}
       <div
         id="custom-menu"
-        className={isActive?"absolute z-50  bg-white border border-gray-300 rounded shadow-lg":"hidden"}
+        className={
+          isActive
+            ? `absolute z-50 bg-white border border-gray-300 rounded shadow-lg`
+            : "hidden"
+        }
+        style={{
+          left: menuLeft,
+          top: menuTop,
+     
+        }}
       >
         <button
           className="w-full text-left px-4 py-2 hover:bg-gray-100"
-          onClick={() => alert("Clicked Option 1")}
+          onClick={clearCanvas}
         >
-          Option 1
+          Clear Canvas
         </button>
         <button
           className="w-full text-left px-4 py-2 hover:bg-gray-100"
