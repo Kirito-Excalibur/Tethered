@@ -20,72 +20,121 @@ export default function App() {
       backgroundColor: "#f0f0f0",
     });
 
-    const rect = new Rect({
-      left: 100,
-      top: 100,
-      fill: "blue",
-      width: 100,
-      height: 100,
-    });
+    // const rect = new Rect({
+    //   left: 100,
+    //   top: 100,
+    //   fill: "blue",
+    //   width: 100,
+    //   height: 100,
+    // });
 
-    canvas.add(rect);
+    // canvas.add(rect);
     setFabricCanvas(canvas);
+    canvas.renderAll();
+
+
+  
+
+
 
 
 //Open custom context menu on right click
-    canvas.upperCanvasEl.addEventListener("mousedown", (event) => {
-      if (event.button === 2) {
+    canvas.on("contextmenu", (event) => {
+      if (event.e.button === 2) {
         // Right-click = 2
         const pointer = canvas.getScenePoint(event);
 
-        setMenuLeft(event.x);
-        setMenuTop(event.y);
+        setMenuLeft(event.e.x);
+        setMenuTop(event.e.y);
 
         setIsActive((prev) => !prev);
 
         console.log(
-          `Right-clicked on Fabric canvas at ${event.x}, ${event.y})`
+          `Right-clicked on Fabric canvas at ${event.e.x}, ${event.e.y})`
         );
       }
     });
 
     // Disable browser context menu
-    canvas.upperCanvasEl.addEventListener("contextmenu", (e) =>
-      e.preventDefault()
+    canvas.on("contextmenu", (e) =>
+      e.e.preventDefault()
     );
 
     // Handle left-click to close the context menu
-    canvas.upperCanvasEl.addEventListener("mousedown", (event) => {
-      if (event.button === 0) {
+    canvas.on("mouse:down", (event) => {
+      if (event.e.button === 0) {
         setIsActive(false);
-        console.log("Left click");
+        console.log(`Left click and ${event.e.type} and ${event.target?.type}`);
       }
+
+      console.log(`${event.e.button}`)
+
     });
 
-    //Enable text editing on textbox on click
-    // canvas.upperCanvasEl.addEventListener("mousedown", (event) => {
-    //   const target = event.target;
-    //   if (!target) return;
-    //   const textbox = target._objects?.find((obj) => obj instanceof Textbox);
-   
-    //   if (textbox) {
-    //     textbox.enterEditing();
-    //     textbox.selectAll();
+
+    //Change of bg of textbox on hover
+    // canvas.on("mouse:over", (event) => {
+    //   const target=event.target;
+    //   if(!target) return;
+    //   const textbox = target.type
+      
+    //   console.log("Hovered over:", textbox, target, canvas.getActiveObject());
+
+    //   if (textbox=='textbox') {
+    //     // canvas.defaultCursor = "pointer";
+    //     target.set({backgroundColor:"red"});
     //   }
+    //   canvas.requestRenderAll(); // use this instead of canvas.renderAll()
+    // })
+
+
+    //Reset bg of textbox on mouse out
+    // canvas.on("mouse:out", (event) => {
+    //   const target=event.target;
+    //   if(!target) return;
+    //   const textbox = target.type
+    //   console.log("Mouse out of:", textbox, target);
+
+    //   if (textbox=='textbox') {
+    //     // canvas.defaultCursor = "default";
+    //     target.set({backgroundColor:"black"});
+    //   }
+    //   canvas.requestRenderAll(); // use this instead of canvas.renderAll()
     // });
 
+    //Change bg of textbox on selection
+    canvas.on("selection:created", (event) => {
+      const target = event;
+      if (!target) return;
+      const textbox = target.selected[0]?.type;
 
-    //Change cursor to pointer on hover and change of bg of textbox
-    canvas.upperCanvasEl.addEventListener("mouseenter", (event) => {
-      const target=event.target;
-      if(!target) return;
-      const textbox = target._objects?.find((obj) => obj instanceof Textbox);
-      
-      if (textbox) {
-        canvas.defaultCursor = "pointer";
-        textbox.set({backgroundColor:"red"});
+  
+      if (textbox == 'textbox') {
+        console.log("Selected Textbox:", textbox);
+        target.selected[0].set({
+          backgroundColor: "gray",
+        });
       }
+      canvas.requestRenderAll(); // use this instead of canvas.renderAll()
     })
+
+
+     //Change bg of textbox on selection
+     canvas.on("selection:cleared", (event) => {
+      const target = event;
+      if (!target) return;
+      const textbox = target.deselected[0]?.type;
+
+  
+      if (textbox == 'textbox') {
+        console.log("Selected Textbox:", textbox);
+        target.deselected[0].set({
+          backgroundColor: "black",
+        });
+      }
+      canvas.requestRenderAll(); // use this instead of canvas.renderAll()
+    })
+
 
     //Zooming
     canvas.upperCanvasEl.addEventListener("wheel", (event) => {

@@ -1,6 +1,7 @@
 import { Group, Rect, Textbox } from "fabric";
 
 export default function Toolbar({ canvas }) {
+ 
   const addRectangle = () => {
     if (!canvas) return;
 
@@ -41,39 +42,19 @@ export default function Toolbar({ canvas }) {
     canvas.requestRenderAll(); // use this instead of canvas.renderAll()
   }
 
-  //function for Node Creation
-  function createNode(top, left) {
+
+  //function to delete grouped objects
+  const deleteSelectedObject = () => {
     if (!canvas) return;
-    const textbox = new Textbox("New Node", {
-      top:top,
-      left:left,
-      width: 120,
-      fontSize: 16,
-      textAlign: "center",
-      editable: true,
-    
-    });
 
-    const padding = 20;
-    const rect = new Rect({
-      top:top,
-      left:left,
-      width: 120,
-      height: 50,
-      fill: "#e0f2fe",
- 
-    });
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length) {
+      activeObjects.forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject(); // clear selection
+      canvas.requestRenderAll();
+    }
+  };
 
-    const group = new Group([rect,textbox],{
-      hasBorders: true,
-      hasControls: true,
-    });
-
-    canvas.add(group);
-    canvas.setActiveObject(group);
-    canvas.requestRenderAll(); // use this instead of canvas.renderAll()
-  
-  }
 
   return (
     <div className="fixed top-0 left-1/2 -translate-x-1/2 z-50 bg-white/90 backdrop-blur px-4 py-2 shadow-md border rounded mt-2 flex gap-2">
@@ -84,15 +65,15 @@ export default function Toolbar({ canvas }) {
         ➕ Add Rectangle
       </button>
       <button
-        onClick={()=>createNode(100, 100)}
-        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Add Node
-      </button>
-      <button
         onClick={addTextbox}
         className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
         ➕ Add Textbox
+        </button>
+        <button
+        onClick={deleteSelectedObject}
+        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        🗑️ Delete Selected
         </button>
     </div>
   );
