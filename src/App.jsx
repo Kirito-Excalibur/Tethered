@@ -170,6 +170,20 @@ export default function App() {
     setIsActive(false);
   };
 
+  // Handle delete key press to remove selected objects
+  const handleKeyDown = (event) => {
+    if (event.key === "Delete" || event.key === "Backspace") {
+      const activeObjects = fabricCanvas.getActiveObjects();
+      if (activeObjects.length) {
+        activeObjects.forEach((obj) => fabricCanvas.remove(obj));
+        fabricCanvas.discardActiveObject(); // clear selection
+        fabricCanvas.requestRenderAll();
+      }
+    }
+  };
+
+  document.addEventListener("keydown", handleKeyDown);
+
   console.log(menuLeft, menuTop);
 
   return (
