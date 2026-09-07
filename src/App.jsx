@@ -1,47 +1,94 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import CanvasManager from "./components/CanvasManager";
-import Sidebar from "./components/Sidebar";
 import Toolbar from "./components/Toolbar";
 import ZoomIndicator from "./components/ZoomIndicator";
 import CustomContextMenu from "./components/CustomContextMenu";
 import KeyboardHandler from "./components/KeyboardHandler";
+import { getStateFromURL, saveStateToURL, clearStateFromURL } from "./utils/urlState";
 
 export default function App() {
   const [fabricCanvas, setFabricCanvas] = useState(null);
   const [currentZoom, setCurrentZoom] = useState(100);
-  const [isActive, setIsActive] = useState(false);
-  const [menuLeft, setMenuLeft] = useState(0);
-  const [menuTop, setMenuTop] = useState(0);
+  const [isContextMenuActive, setIsContextMenuActive] = useState(false);
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+  const [copied, setCopied] = useState(false);
+  const isLoadingRef = useRef(false);
+
+  // Load state from URL when canvas is ready
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    const state = getStateFromURL();
+    if (!state) return;
+    isLoadingRef.current = true;
+    fabricCanvas.loadFromJSON(state).then(() => {
+      fabricCanvas.requestRenderAll();
+      setTimeout(() => { isLoadingRef.current = false; }, 100);
+    });
+  }, [fabricCanvas]);
+
+  // Auto-save canvas state to URL on changes
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    let timer;
+
+    const saveToURL = () => {
+      if (isLoadingRef.current) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const json = fabricCanvas.toJSON();
+        if (!json.objects || json.objects.length === 0) {
+          clearStateFromURL();
+        } else {
+          saveStateToURL(json);
+        }
+      }, 500);
+    };
+
+    fabricCanvas.on('object:added', saveToURL);
+    fabricCanvas.on('object:modified', saveToURL);
+    fabricCanvas.on('object:removed', saveToURL);
+
+    return () => {
+      clearTimeout(timer);
+      fabricCanvas.off('object:added', saveToURL);
+      fabricCanvas.off('object:modified', saveToURL);
+      fabricCanvas.off('object:removed', saveToURL);
+    };
+  }, [fabricCanvas]);
 
   const clearCanvas = () => {
-    if (fabricCanvas) {
-      fabricCanvas.getObjects().forEach((obj) => fabricCanvas.remove(obj));
-      fabricCanvas.renderAll();
-      setIsActive(false);
-    }
+    if (!fabricCanvas) return;
+    fabricCanvas.clear();
+    fabricCanvas.backgroundColor = '#f5f5f5';
+    fabricCanvas.requestRenderAll();
+    clearStateFromURL();
+    setIsContextMenuActive(false);
+  };
+
+  const handleShare = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <>
-      <div className="flex justify-center">
-        <CanvasManager
-          setFabricCanvas={setFabricCanvas}
-          setMenuLeft={setMenuLeft}
-          setMenuTop={setMenuTop}
-          setIsActive={setIsActive}
-          setCurrentZoom={setCurrentZoom}
+    <div className="w-screen h-screen overflow-hidden relative">
+      <CanvasManager
+        setFabricCanvas={setFabricCanvas}
+        setContextMenuPos={setContextMenuPos}
+        setIsContextMenuActive={setIsContextMenuActive}
+        setCurrentZoom={setCurrentZoom}
+      />
+      <Toolbar canvas={fabricCanvas} onShare={handleShare} copied={copied} />
+      <ZoomIndicator currentZoom={currentZoom} />
+      {isContextMenuActive && (
+        <CustomContextMenu
+          pos={contextMenuPos}
+          clearCanvas={clearCanvas}
+          onClose={() => setIsContextMenuActive(false)}
         />
-        <ZoomIndicator currentZoom={currentZoom} />
-        {isActive && (
-          <CustomContextMenu
-            menuLeft={menuLeft}
-            menuTop={menuTop}
-            clearCanvas={clearCanvas}
-          />
-        )}
-      </div>
-      <Toolbar canvas={fabricCanvas} />
+      )}
       <KeyboardHandler fabricCanvas={fabricCanvas} />
-    </>
+    </div>
   );
 }

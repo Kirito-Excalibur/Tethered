@@ -1,12 +1,16 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 export default function KeyboardHandler({ fabricCanvas }) {
   useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "Delete" || event.key === "Backspace") {
+    const handleKeyDown = (e) => {
+      if (!fabricCanvas) return;
+      const activeObj = fabricCanvas.getActiveObject();
+      if (activeObj?.isEditing) return;
+
+      if (e.key === "Delete" || e.key === "Backspace") {
         const activeObjects = fabricCanvas.getActiveObjects();
         if (activeObjects.length) {
-          activeObjects.forEach((obj) => fabricCanvas.remove(obj));
+          activeObjects.forEach(obj => fabricCanvas.remove(obj));
           fabricCanvas.discardActiveObject();
           fabricCanvas.requestRenderAll();
         }
@@ -14,10 +18,7 @@ export default function KeyboardHandler({ fabricCanvas }) {
     };
 
     document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [fabricCanvas]);
 
   return null;

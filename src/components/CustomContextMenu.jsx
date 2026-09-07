@@ -1,16 +1,15 @@
-export default function CustomContextMenu({ menuLeft, menuTop, clearCanvas }) {
+export default function CustomContextMenu({ pos, clearCanvas, onClose }) {
   return (
     <div
-      className="absolute bg-white border border-gray-300 rounded shadow-md p-2"
-      style={{ top: menuTop, left: menuLeft }}
+      className="absolute bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+      style={{ top: pos.y, left: pos.x }}
     >
       <button
-        onClick={clearCanvas}
-        className="block w-full text-left px-2 py-1 hover:bg-gray-100"
+        onClick={() => { clearCanvas(); onClose(); }}
+        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600"
       >
         Clear Canvas
       </button>
-      {/* Add more menu items here */}
     </div>
   );
 }
