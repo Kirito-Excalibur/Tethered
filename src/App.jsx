@@ -13,7 +13,7 @@ export default function App() {
   const [isContextMenuActive, setIsContextMenuActive] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [copied, setCopied] = useState(false);
-  const [isViewMode, setIsViewMode] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(() => !!getStateFromURL());
   const isLoadingRef = useRef(false);
 
   // Load state from URL when canvas is ready
@@ -23,6 +23,34 @@ export default function App() {
     if (!fabricJSON) return;
     isLoadingRef.current = true;
     fabricCanvas.loadFromJSON(fabricJSON).then(() => {
+      // Center viewport on the loaded content
+      const objects = fabricCanvas.getObjects();
+      if (objects.length > 0) {
+        // Compute bounding box of all objects in canvas coordinates
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        objects.forEach(obj => {
+          const bounds = obj.getBoundingRect();
+          minX = Math.min(minX, bounds.left);
+          minY = Math.min(minY, bounds.top);
+          maxX = Math.max(maxX, bounds.left + bounds.width);
+          maxY = Math.max(maxY, bounds.top + bounds.height);
+        });
+        const contentW = maxX - minX;
+        const contentH = maxY - minY;
+        // Fit with padding, capped at 100% zoom
+        const padding = 40;
+        const zoom = Math.min(
+          1,
+          (fabricCanvas.width  - padding * 2) / contentW,
+          (fabricCanvas.height - padding * 2) / contentH,
+        );
+        const panX = (fabricCanvas.width  - contentW * zoom) / 2 - minX * zoom;
+        const panY = (fabricCanvas.height - contentH * zoom) / 2 - minY * zoom;
+        fabricCanvas.setZoom(zoom);
+        fabricCanvas.viewportTransform[4] = panX;
+        fabricCanvas.viewportTransform[5] = panY;
+        setCurrentZoom(Math.round(zoom * 100));
+      }
       fabricCanvas.requestRenderAll();
       setTimeout(() => { isLoadingRef.current = false; }, 100);
     });
