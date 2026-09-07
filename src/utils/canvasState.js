@@ -70,8 +70,16 @@ function expandObject(obj) {
 
 // Serialize canvas objects + connections into our compact format.
 export function serializeCanvas(canvas, connections = []) {
-  const json = canvas.toJSON(['nodeId']);
-  const state = { v: 1, o: json.objects.map(compressObject) };
+  const json = canvas.toJSON();
+  const liveObjects = canvas.getObjects();
+  // Fabric 6 doesn't serialize dynamically-set properties via toJSON(['nodeId']),
+  // so we inject nodeId manually from the live objects by index.
+  const state = { v: 1, o: json.objects.map((obj, i) => {
+    const compressed = compressObject(obj);
+    const nodeId = liveObjects[i]?.nodeId;
+    if (nodeId) compressed['ni'] = nodeId;
+    return compressed;
+  })};
   if (connections.length > 0) {
     // Each connection stored as [fromId, fromPort, toId, toPort] to keep URLs short
     state.c = connections.map(({ fromId, fromPort, toId, toPort, mid }) => {
@@ -90,6 +98,12 @@ export function prepareFabricJSON(state) {
   if (state.v === 1) return { objects: state.o.map(expandObject) };
   if (state.objects) return state;   // old format
   return null;
+}
+
+// Extract the nodeId for each object from stored state (parallel array by index).
+export function getNodeIdsFromState(state) {
+  if (!state?.o) return [];
+  return state.o.map(obj => obj['ni'] ?? null);
 }
 
 // Extract connections from stored state.

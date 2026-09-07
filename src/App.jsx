@@ -6,7 +6,7 @@ import CustomContextMenu from "./components/CustomContextMenu";
 import KeyboardHandler from "./components/KeyboardHandler";
 import ConnectionLayer from "./components/ConnectionLayer";
 import { getStateFromURL, saveStateToURL, clearStateFromURL } from "./utils/urlState";
-import { serializeCanvas, prepareFabricJSON, getConnectionsFromState } from "./utils/canvasState";
+import { serializeCanvas, prepareFabricJSON, getConnectionsFromState, getNodeIdsFromState } from "./utils/canvasState";
 import { generateId } from "./utils/connectionUtils";
 
 const MAX_HISTORY = 50;
@@ -123,7 +123,11 @@ export default function App() {
 
     isLoadingRef.current = true;
     fabricCanvas.loadFromJSON(fabricJSON).then(() => {
-      fabricCanvas.getObjects().forEach(obj => { if (!obj.nodeId) obj.nodeId = generateId(); });
+      // Restore nodeIds from the state's object array (Fabric 6 won't carry custom props through loadFromJSON).
+      const savedNodeIds = getNodeIdsFromState(state);
+      fabricCanvas.getObjects().forEach((obj, i) => {
+        obj.nodeId = savedNodeIds[i] ?? generateId();
+      });
 
       const conns = getConnectionsFromState(state);
       setConnections(conns);
@@ -173,9 +177,10 @@ export default function App() {
     let urlTimer;
 
     const saveToURL = () => {
-      if (isLoadingRef.current) return;
+      if (isLoadingRef.current || isRestoringRef.current) return;
       clearTimeout(urlTimer);
       urlTimer = setTimeout(() => {
+        if (isRestoringRef.current) return;
         const compact = serializeCanvas(fabricCanvas, connectionsRef.current);
         compact.o.length === 0 && connectionsRef.current.length === 0
           ? clearStateFromURL()
@@ -235,6 +240,12 @@ export default function App() {
   };
 
   const handleShare = async () => {
+    if (fabricCanvas) {
+      const compact = serializeCanvas(fabricCanvas, connectionsRef.current);
+      compact.o.length === 0 && connectionsRef.current.length === 0
+        ? clearStateFromURL()
+        : saveStateToURL(compact);
+    }
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
