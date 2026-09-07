@@ -35,7 +35,10 @@ const TO_SHORT = {
 const FROM_SHORT = Object.fromEntries(Object.entries(TO_SHORT).map(([k, v]) => [v, k]));
 
 // Shape type → single/two char tag
-const TYPE_TO_SHORT   = { rect: 'r', circle: 'c', textbox: 'x', line: 'ln' };
+const TYPE_TO_SHORT   = {
+  rect: 'r', circle: 'c', textbox: 'x', line: 'ln',
+  triangle: 'tr', polygon: 'pg', path: 'ph',
+};
 const TYPE_FROM_SHORT = Object.fromEntries(Object.entries(TYPE_TO_SHORT).map(([k, v]) => [v, k]));
 
 function isEmptyStyles(val) {

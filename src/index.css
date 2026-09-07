@@ -1,1 +1,25 @@
-@import 'tailwindcss'
+@import 'tailwindcss';
+
+/* Places the toolbar above the iOS home indicator / Android nav bar.
+   Scoped to mobile only so it never conflicts with sm:top-3 on desktop. */
+@media (max-width: 639.98px) {
+  .toolbar-safe-bottom {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+}
+
+/* Shapes dropdown: opens upward on mobile (bottom toolbar), downward on desktop (top toolbar). */
+.shapes-dropdown {
+  display: grid;
+  grid-template-columns: repeat(4, 3.5rem);
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+}
+@media (min-width: 640px) {
+  .shapes-dropdown {
+    bottom: auto;
+    top: calc(100% + 0.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
