@@ -5,6 +5,7 @@ import ZoomIndicator from "./components/ZoomIndicator";
 import CustomContextMenu from "./components/CustomContextMenu";
 import KeyboardHandler from "./components/KeyboardHandler";
 import { getStateFromURL, saveStateToURL, clearStateFromURL } from "./utils/urlState";
+import { serializeCanvas, prepareFabricJSON } from "./utils/canvasState";
 
 export default function App() {
   const [fabricCanvas, setFabricCanvas] = useState(null);
@@ -18,10 +19,10 @@ export default function App() {
   // Load state from URL when canvas is ready
   useEffect(() => {
     if (!fabricCanvas) return;
-    const state = getStateFromURL();
-    if (!state) return;
+    const fabricJSON = prepareFabricJSON(getStateFromURL());
+    if (!fabricJSON) return;
     isLoadingRef.current = true;
-    fabricCanvas.loadFromJSON(state).then(() => {
+    fabricCanvas.loadFromJSON(fabricJSON).then(() => {
       fabricCanvas.requestRenderAll();
       setTimeout(() => { isLoadingRef.current = false; }, 100);
     });
@@ -36,11 +37,11 @@ export default function App() {
       if (isLoadingRef.current) return;
       clearTimeout(timer);
       timer = setTimeout(() => {
-        const json = fabricCanvas.toJSON();
-        if (!json.objects || json.objects.length === 0) {
+        const compact = serializeCanvas(fabricCanvas);
+        if (!compact.o || compact.o.length === 0) {
           clearStateFromURL();
         } else {
-          saveStateToURL(json);
+          saveStateToURL(compact);
         }
       }, 500);
     };
