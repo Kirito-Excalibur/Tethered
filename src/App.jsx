@@ -12,6 +12,7 @@ export default function App() {
   const [isContextMenuActive, setIsContextMenuActive] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [copied, setCopied] = useState(false);
+  const [isViewMode, setIsViewMode] = useState(false);
   const isLoadingRef = useRef(false);
 
   // Load state from URL when canvas is ready
@@ -71,6 +72,11 @@ export default function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const toggleMode = () => {
+    setIsViewMode(v => !v);
+    setIsContextMenuActive(false);
+  };
+
   return (
     <div className="w-screen h-screen overflow-hidden relative">
       <CanvasManager
@@ -78,17 +84,24 @@ export default function App() {
         setContextMenuPos={setContextMenuPos}
         setIsContextMenuActive={setIsContextMenuActive}
         setCurrentZoom={setCurrentZoom}
+        isViewMode={isViewMode}
       />
-      <Toolbar canvas={fabricCanvas} onShare={handleShare} copied={copied} />
+      <Toolbar
+        canvas={fabricCanvas}
+        onShare={handleShare}
+        copied={copied}
+        isViewMode={isViewMode}
+        onToggleMode={toggleMode}
+      />
       <ZoomIndicator currentZoom={currentZoom} />
-      {isContextMenuActive && (
+      {isContextMenuActive && !isViewMode && (
         <CustomContextMenu
           pos={contextMenuPos}
           clearCanvas={clearCanvas}
           onClose={() => setIsContextMenuActive(false)}
         />
       )}
-      <KeyboardHandler fabricCanvas={fabricCanvas} />
+      <KeyboardHandler fabricCanvas={fabricCanvas} isViewMode={isViewMode} />
     </div>
   );
 }

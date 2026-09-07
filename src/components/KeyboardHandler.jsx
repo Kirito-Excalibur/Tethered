@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-export default function KeyboardHandler({ fabricCanvas }) {
+export default function KeyboardHandler({ fabricCanvas, isViewMode }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!fabricCanvas) return;
+      if (!fabricCanvas || isViewMode) return;
       const activeObj = fabricCanvas.getActiveObject();
       if (activeObj?.isEditing) return;
 
@@ -19,7 +19,7 @@ export default function KeyboardHandler({ fabricCanvas }) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [fabricCanvas]);
+  }, [fabricCanvas, isViewMode]);
 
   return null;
 }
