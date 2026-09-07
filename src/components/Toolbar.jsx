@@ -4,7 +4,7 @@ import ShapesDropdown from './ShapesDropdown';
 // Shared position: bottom on mobile, top on sm+
 const TOOLBAR_POS = "toolbar-safe-bottom sm:top-3 sm:bottom-auto fixed left-1/2 -translate-x-1/2 z-50";
 
-export default function Toolbar({ canvas, onShare, copied, isViewMode, onToggleMode }) {
+export default function Toolbar({ canvas, onShare, copied, isViewMode, onToggleMode, onUndo, onRedo, canUndo, canRedo }) {
   const [shapesOpen, setShapesOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -76,6 +76,9 @@ export default function Toolbar({ canvas, onShare, copied, isViewMode, onToggleM
       </div>
 
       <Divider />
+      <Btn icon="↩" label="Undo" onClick={onUndo} disabled={!canUndo} />
+      <Btn icon="↪" label="Redo" onClick={onRedo} disabled={!canRedo} />
+      <Divider />
       <Btn icon="✕" label="Delete" onClick={deleteSelected} variant="danger" />
       <Divider />
       <Btn icon="⊙" label="View"   onClick={onToggleMode} />
@@ -89,7 +92,7 @@ export default function Toolbar({ canvas, onShare, copied, isViewMode, onToggleM
   );
 }
 
-function Btn({ icon, label, onClick, variant = 'default', active = false }) {
+function Btn({ icon, label, onClick, variant = 'default', active = false, disabled = false }) {
   const variants = {
     default: 'hover:bg-gray-100 active:bg-gray-200 text-gray-600',
     danger:  'hover:bg-red-50  active:bg-red-100  text-red-500',
@@ -100,10 +103,12 @@ function Btn({ icon, label, onClick, variant = 'default', active = false }) {
     <button
       className={`flex flex-col items-center justify-center touch-manipulation
                   w-10 h-10 sm:w-12 sm:h-12 rounded-xl
-                  text-xs font-medium transition-colors cursor-pointer select-none
-                  ${active ? 'bg-gray-100' : ''} ${variants[variant]}`}
-      onClick={onClick}
+                  text-xs font-medium transition-colors select-none
+                  ${disabled ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer'}
+                  ${active ? 'bg-gray-100' : ''} ${disabled ? 'text-gray-400' : variants[variant]}`}
+      onClick={disabled ? undefined : onClick}
       title={label}
+      disabled={disabled}
     >
       <span className="text-lg sm:text-base leading-none">{icon}</span>
       <span className="hidden sm:block mt-1 text-[10px]">{label}</span>

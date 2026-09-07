@@ -30,7 +30,7 @@ const TO_SHORT = {
   fontWeight: 'fw', fontStyle: 'fi', textAlign: 'ta', lineHeight: 'lh',
   x1: 'x1',  y1: 'y1',  x2: 'x2',  y2: 'y2',
   scaleX: 'sx', scaleY: 'sy', angle: 'ag', opacity: 'op',
-  styles: 'cs',
+  styles: 'cs', nodeId: 'ni',
 };
 const FROM_SHORT = Object.fromEntries(Object.entries(TO_SHORT).map(([k, v]) => [v, k]));
 
@@ -68,10 +68,19 @@ function expandObject(obj) {
   return result;
 }
 
-// Serialize canvas objects into our compact format.
-export function serializeCanvas(canvas) {
-  const json = canvas.toJSON();
-  return { v: 1, o: json.objects.map(compressObject) };
+// Serialize canvas objects + connections into our compact format.
+export function serializeCanvas(canvas, connections = []) {
+  const json = canvas.toJSON(['nodeId']);
+  const state = { v: 1, o: json.objects.map(compressObject) };
+  if (connections.length > 0) {
+    // Each connection stored as [fromId, fromPort, toId, toPort] to keep URLs short
+    state.c = connections.map(({ fromId, fromPort, toId, toPort, mid }) => {
+      const arr = [fromId, fromPort, toId, toPort];
+      if (mid) arr.push(Math.round(mid.x), Math.round(mid.y));
+      return arr;
+    });
+  }
+  return state;
 }
 
 // Convert stored state → Fabric-compatible JSON for loadFromJSON.
@@ -81,4 +90,15 @@ export function prepareFabricJSON(state) {
   if (state.v === 1) return { objects: state.o.map(expandObject) };
   if (state.objects) return state;   // old format
   return null;
+}
+
+// Extract connections from stored state.
+export function getConnectionsFromState(state) {
+  if (!state?.c) return [];
+  return state.c.map((arr, i) => ({
+    id: String(i),
+    fromId: arr[0], fromPort: arr[1],
+    toId:   arr[2], toPort:   arr[3],
+    mid: arr.length > 4 ? { x: arr[4], y: arr[5] } : null,
+  }));
 }

@@ -1,8 +1,14 @@
 import { useEffect } from "react";
 
-export default function KeyboardHandler({ fabricCanvas, isViewMode }) {
+export default function KeyboardHandler({ fabricCanvas, isViewMode, onUndo, onRedo }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      // Undo / Redo work in both modes
+      if (ctrl && e.key === 'z' && !e.shiftKey) { e.preventDefault(); onUndo?.(); return; }
+      if (ctrl && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); onRedo?.(); return; }
+
       if (!fabricCanvas || isViewMode) return;
       const activeObj = fabricCanvas.getActiveObject();
       if (activeObj?.isEditing) return;
@@ -19,7 +25,7 @@ export default function KeyboardHandler({ fabricCanvas, isViewMode }) {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [fabricCanvas, isViewMode]);
+  }, [fabricCanvas, isViewMode, onUndo, onRedo]);
 
   return null;
 }

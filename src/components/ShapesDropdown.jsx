@@ -1,4 +1,5 @@
 import { Rect, Circle, Textbox, Line, Triangle, Polygon, Path } from 'fabric';
+import { generateId } from '../utils/connectionUtils';
 
 const WIRE = { fill: '#FFFFFF', stroke: '#777777', strokeWidth: 2 };
 
@@ -76,7 +77,9 @@ export default function ShapesDropdown({ canvas, onAdd }) {
           key={label}
           onClick={() => {
             const { x, y } = vpCenter();
-            onAdd(create(x, y));
+            const obj = create(x, y);
+            obj.nodeId = generateId();
+            onAdd(obj);
           }}
           className="flex flex-col items-center justify-center gap-0.5 w-14 h-14 rounded-xl hover:bg-gray-100 active:bg-gray-200 text-gray-600 transition-colors touch-manipulation select-none"
           title={label}
